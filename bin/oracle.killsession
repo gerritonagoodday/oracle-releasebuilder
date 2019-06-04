@@ -1,0 +1,50 @@
+#!/usr/bin/bash
+if [[ -z $1 ]]; then
+  cat <<EOF
+Usage:        ${0##*/} SID SERIAL#
+Achtung!      This script kills Oracle sessions.
+              The hostcmd function needs to be installed.
+              External procedures on Oracle must be enabled.
+Requirements: The PL/SQL hostcmd function and its binary library
+Parmaters:    1 SID
+              2 SERIAL#
+Environment:  ORACLE_SID should be defined.
+EOF
+  echo "Exiting..."
+  exit 1
+fi
+
+SID=$1
+SERIAL=$2
+[[ -z $ORACLE_SID ]] && echo "ORACLE_SID is not defined. Exiting..." && exit 1
+LOGFILE=/tmp/${0##*/}.log
+TMPFILE=/tmp/${0##*/}$$
+COMMAND="alter system kill session '$1,$2'"
+echo "Killing oracle session '$1,$2' on Oracle instance $ORACLE_SID..." | tee -a $LOGFILE
+
+
+cat > $TMPFILE<<EOF
+#!/usr/bin/bash
+ORACLE_SID=$ORACLE_SID
+APP_HOME=$APP_HOME
+sqlplus  -s / <<!
+\$COMMAND;
+!
+RETCODE=\$?
+echo \$RETCODE >> $LOGFILE
+exit \$RETCODE
+EOF
+chmod 777 $TMPFILE
+
+# Execute script
+sqlplus -s  / <<!
+set feedback off
+set autoprint on
+var RESULT number
+exec :RESULT:=utl.hostcmd('$TMPFILE');
+quit :RESULT
+!
+RESULT=$?
+
+rm -f $TMPFILE
+exit $RESULT

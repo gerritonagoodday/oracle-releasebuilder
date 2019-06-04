@@ -1,0 +1,171 @@
+#!/usr/bin/bash
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+RELEASE=$1
+APPLICATION=$2
+[[ -z $RELEASE ]] && printf "
+Usage:
+  ${0##*/} build-directory [application name]
+where:
+  - build-directory is the directory containing the build, such that the
+      directory has the same name as the build. A build is typically called
+      'build001' or 'build002' etc. (but can be called anything you like,
+      actually).
+      Note that the name of the build should also be reflected in the
+      RELEASE file in the buildXXX/install directory.
+  - application name is an optional parameter containing the project name.
+      This name will be prepended to the resulting installation package.
+
+Creates a build package called buildXXX.tar.gz (or appname-buildXXX.tar.gz
+if you have specified the application name) in the current directory.
+
+The build directory contains all the files from which the application is
+installed and has the directory structure shown below. The comprensive
+directory structure can be found in the accompaning template build,
+buildXXX.tar.gz.
+
+    buildXXX-+-application-+-bin
+             |             +-cron
+             |             +-lib
+             |             +-oracle-+-schema1
+             |                      +-schema2 etc...
+             +-install-+-preinstall
+             |         +-postinstall
+             +-tools
+
+The resulting installation package will:
+  - Firstly execute all the files in the preinstall directory
+  - Copy and make executable all files in the bin directory to the
+    application-environment's bin directory, and do the same for the lib
+    directory.
+  - Install or update cron jobs for all files in the cron directory.
+    The cron jobs will be owned by the application's UNIX user.
+  - Install and compile all the files in the oracle directory to the
+    relevant schemas.
+  - Finally execute all the files in the postinstall directory
+
+
+" && exit 1
+
+APPLICATION=$(echo $APPLICATION | sed -e 's/ //g' | tr [A-Z] [a-z])
+
+if [[ $(which dos2unix | wc -l) = 0 ]]; then
+  if [[ $(which perl | wc -l) = 0 ]]; then
+    DOS2UNIX="perl -pi -e 's/\r\n/\n/'"
+  else
+    printf " * Neither dos2unix nor perl is installed in this environment.\n   Exiting...\n"
+    exit 1
+  fi
+else
+  DOS2UNIX=$(which dos2unix)
+fi
+
+[[ ! -d $RELEASE ]] && \
+  printf " * The build directory $RELEASE does not exist.\n   Exiting...\n" && \
+  exit 1
+
+# Checking for the existance of RELEASE file
+[[ ! -r $RELEASE/install/RELEASE ]] && \
+  printf " * The RELEASE file could not be found.\n   Exiting..." && \
+  exit 1
+
+RELEASE_NAME=$(grep "^ *RELEASE_NAME *=" $RELEASE/install/RELEASE)
+[[ ${#RELEASE_NAME[*]} > 1 ]] && \
+  printf " * Too many releases defined in the RELEASE note.\n   Exiting...\n" && \
+  exit 1
+[[ ${#RELEASE_NAME[*]} = 0 ]] && \
+  printf " * The RELEASE note does not define a Release.\n   Exiting...\n" && \
+  exit 1
+
+eval ${RELEASE_NAME}
+RELEASE=$RELEASE_NAME
+BUILD_DIR=${RELEASE##*/}
+[[ $RELEASE != $BUILD_DIR ]] && \
+  printf " * The RELEASE name in the build directory is $RELEASE
+   but this is not the same as the build directory name, $BUILD_DIR
+   Exiting...\n" && \
+  exit 1
+
+
+[[ ! -d $RELEASE/install ]] && \
+  printf " * The install directory $RELEASE/install does not exist.\n   Exiting...\n" && \
+  exit 1
+
+if [[ -z $APPLICATION ]]; then
+  printf "Build installation package for $RELEASE:\n"
+else
+  printf "Building installation package for application '$APPLICATION' release '$RELEASE':\n"
+fi
+
+TOTALFILECOUNT=$(($(find $RELEASE/application/oracle  -type f | wc -l) \
+                + $(find $RELEASE/application/bin     -type f | wc -l) \
+                + $(find $RELEASE/install -type f | wc -l)))
+printf " - Stripping DOS chars from $TOTALFILECOUNT installation files"
+printf "."
+find $RELEASE/application/bin -type f -exec $DOS2UNIX {} \;
+printf "."
+find $RELEASE/install -type f -exec $DOS2UNIX {} \;
+printf "."
+find $RELEASE/application/oracle -type f -exec $DOS2UNIX {} \;
+printf ".\n"
+
+printf " - Making binary files executable"
+printf "."
+# Optional
+[[ -d $RELEASE/application/bin  ]] && find $RELEASE/application/bin -type f -exec chmod +x {} \;
+printf "."
+[[ -d $RELEASE/application/lib  ]] && find $RELEASE/application/lib -type f -exec chmod +x {} \;
+printf "."
+[[ -d $RELEASE/application/cron ]] && find $RELEASE/application/cron -type f -exec chmod +x {} \;
+printf "."
+[[ -d $RELEASE/application/cron ]] && find $RELEASE/tools -type f -exec chmod +x {} \;
+printf "."
+# Mandatory
+find $RELEASE/install -type f -name *.ksh  -exec chmod +x {} \;
+printf ".\n"
+
+printf " - Creating build package $PACKAGE...\n"
+if [[ -z $APPLICATION ]]; then
+  PACKAGE=$RELEASE.tar.gz
+  tar -czf $PACKAGE $RELEASE 2>/dev/null
+else
+  NEWDIR=${APPLICATION}-${RELEASE}
+  PACKAGE=${NEWDIR}.tar.gz
+echo $PACKAGE
+  rm -fr ${NEWDIR} 2>/dev/null
+  # Create temporaty symbolic link to include the application name
+  # in the directory when it is unpacked.
+  ln -s ${RELEASE} ${NEWDIR} 2>/dev/null
+  tar -hczf $PACKAGE ${NEWDIR} 2>/dev/null
+  rm -fr ${NEWDIR}
+fi
+
+# The only sure way to test that TAR worked is to check if the resulting
+# file is present.
+[[ ! -r ${PACKAGE} ]] && printf " * It appears that the file ${PACKAGE} could not be created.
+   This could be because invalid characters were specified in the build name,
+   or if you specified it, the application name. Or maybe you do not have
+   write access to this directory.
+   Exiting...\n" && exit 1
+
+
+printf "   This package can be unpacked on the target server:
+     \$ tar -xzvf $PACKAGE
+   It can then be installed as follows:
+     \$ cd `basename $PACKAGE`/install
+     \$ ./install.ksh
+"
+
+if [[ $(which md5sum | wc -l) > 0 ]]; then
+  printf " - Generating MD5 checksum for $PACKAGE...\n"
+  md5sum $PACKAGE > $PACKAGE.md5
+  printf "   Check the installation package for corruption after it is
+   transferred to the target server:
+     \$ md5sum -c $PACKAGE.md5
+       - which should, if all is well, give you:
+     $PACKAGE: OK
+"
+fi
+
+printf " - Installation package creation complete.\n"
+

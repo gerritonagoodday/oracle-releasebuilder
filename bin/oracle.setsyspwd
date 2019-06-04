@@ -1,0 +1,108 @@
+#!/usr/bin/bash
+if [[ -z $1 ]]; then
+  cat <<EOF
+Usage:        ${0##*/} PASSWD
+Achtung!      This script attempts to set the oracle SYS user password by
+              exploiting C-style external procedures. Use this with care and
+              only in extreme cases!
+              It also generates a script that you can run to reset the SYS
+              password back to the original.
+Requirements: The PL/SQL hostcmd function and its binary library need to be
+              installed. An Oracle listener should be listening to external
+              procedure calls from the hostcmd library.
+Parmaters:    Desired PASSWD
+Environment:  ORACLE_SID should be defined.
+EOF
+  exit 1
+fi
+
+
+PASSWD=$1
+[[ -z $ORACLE_SID ]] && echo "ORACLE_SID is not defined. Exiting..." && exit 1
+TMPDIR=/tmp
+LOGFILE=$TMPDIR/${0##*/}.log
+rm -fr $LOGFILE
+touch $LOGFILE;
+chmod 666 $LOGFILE
+TMPFILE=$TMPDIR/.${0##*/}$$
+PDWFILE=$TMPDIR/.pwd$$
+RESETFILE=$TMPDIR/oracle.resetsyspwd
+
+trap "rm -f $PDWFILE $TMPFILE $RESETFILE" INT TERM HUP
+trap "rm -f $PDWFILE $TMPFILE" EXIT
+
+# Create script that will save the existing password (albeit the hash)
+# in a temporary file.
+cat > $TMPFILE<<EOF
+#!/usr/bin/bash
+ORACLE_SID=$ORACLE_SID
+COMMAND="select password from dba_users where username = 'SYS'"
+echo "Saving SYS password" | tee -a $LOGFILE
+touch $PDWFILE
+chmod 777 $PDWFILE
+sqlplus -s / > $PDWFILE 2>&1 <<!
+set showmode off echo off heading off pagesize 0 timing off feedback off termout off verify off
+\$COMMAND;
+!
+RETCODE=\$?
+echo \$RETCODE >> $LOGFILE
+exit \$RETCODE
+EOF
+chmod 777 $TMPFILE
+
+# Execute script
+sqlplus  / >> $LOGFILE <<!
+set feedback off
+set autoprint on
+var RESULT number
+exec :RESULT:=utl.hostcmd('$TMPFILE');
+quit :RESULT
+!
+RETCODE=$?
+rm -f $TMPFILE
+[[ $RETCODE != 0 ]] && printf "Could not save the password of SYS. Exiting...\n" && exit 1
+
+# Make up script that will reset the password
+OLDPWD=$(cat $PDWFILE)
+cat > $RESETFILE <<EOF
+#!/usr/bin/bash
+printf "Resetting SYS password back to original.\n"
+sqlplus -s "sys/$PASSWD as sysdba" <<!
+alter user sys identified by values '$OLDPWD';
+!
+EOF
+chmod +x $RESETFILE
+
+# Create script that will set the new password
+cat > $TMPFILE<<EOF
+#!/usr/bin/bash
+ORACLE_SID=$ORACLE_SID
+COMMAND="alter user sys identified by $PASSWD"
+echo "Changing sys password on Oracle instance $ORACLE_SID" | tee -a $LOGFILE
+sqlplus / >> $LOGFILE 2>&1 <<!
+\$COMMAND;
+!
+RETCODE=\$?
+echo \$RETCODE >> $LOGFILE
+exit \$RETCODE
+EOF
+chmod 777 $TMPFILE
+
+# Execute script
+sqlplus  / >> $LOGFILE <<!
+set feedback off
+set autoprint on
+var RESULT number
+exec :RESULT:=utl.hostcmd('$TMPFILE');
+quit :RESULT
+!
+RETCODE=$?
+[[ $RETCODE != 0 ]] && printf "Could not set the password of SYS. Exiting...\n" && exit 1
+
+if [[ $RETCODE = 0 ]]; then
+ printf "You can now log on as user sys using the password that you provided:\n"
+ printf '  $ sqlplus "sys/$PASSWD as sysdba\n'
+ printf "Run $RESETFILE to reset the password to the original one.\n"
+fi
+
+exit $RETCODE

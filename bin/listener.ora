@@ -1,0 +1,37 @@
+#----------------------------------------------------------------------
+#----------------------------------------------------------------------
+#  DESCRIPTION:
+#  Oracle instance configuration file
+#
+#  USAGE:
+#  Edit this file to change the database's behaviour.
+#  See the manual, "Oracle Administrator's Guide" for details.
+#
+#  NOTE:
+#  Set HOST = 0.0.0.0 to compensate for a bug in 10.1.0.2 release
+#  of Oracle's Listener daemon
+#----------------------------------------------------------------------
+
+SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC =
+      (SID_NAME = PLSExtProc)
+      (ORACLE_HOME = %ORACLE_HOME%)
+      (PROGRAM = extproc)
+      (ENVS="EXTPROC_DLLS=ANY")
+    )
+  )
+
+
+LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS_LIST =
+        (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC))
+      )
+      (ADDRESS_LIST =
+        (ADDRESS = (PROTOCOL = TCP)(HOST = %HOSTNAME%)(PORT = 1521))
+      )
+    )
+  )
+

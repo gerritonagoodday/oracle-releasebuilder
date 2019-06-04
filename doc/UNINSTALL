@@ -1,0 +1,54 @@
+Uninstalling an installed Oracle Database Application
+=====================================================
+
+[ $Header: $ ]
+
+Table of Contents:
+  1. Description
+  2. Uninstallation
+  3. Clean-up
+
+1. DESCRIPTION
+~~~~~~~~~~~~~~
+The database application can be completely uninstalled from the server leaving
+you with only the installation scripts and the server Oracle RDBMS software.
+
+You should only perform the following steps if you are sure that you want to
+purge the application from the database that you had installed. You do not
+need to perform all the steps, depending on how deep you want to uninstall to.
+
+2. UNINSTALLATION
+~~~~~~~~~~~~~~~~~
+Step 1:
+   To remove the application from the database, do the following as user
+   'oracle' or whoever was set up as the Oracle Admin. user:
+      $ export ORACLE_SID=<instance name>
+      $ sqlplus /nolog @${ORACLE_SID}_uninstall.sql
+
+Step 2:
+   To remove the entire database, do the following as user 'oracle':
+
+      $ export ORACLE_SID=<instance name>
+      $ sqlplus /nolog
+      SQL> connect / as sysdba
+      SQL> shutdown abort;
+      SQL> drop database;
+      SQL> quit;
+
+Step 3:
+   You can recover the disk space used by the database by deleting the data
+   files in the $ORACLE_DATA directory or wherever you installed them.
+   As user 'oracle':
+
+      $ export ORACLE_SID=<instance_name>
+      $ rm -fr $ORACLE_DATA
+
+3. CLEAN-UP
+~~~~~~~~~~~
+This is an optional step and removes all traces of the installation from the
+install directory. It will not remove the installation code though:
+As user 'oracle':
+
+      $ export ORACLE_SID=<instance_name>
+      $ ./cleanup.ksh
+

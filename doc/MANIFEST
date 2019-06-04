@@ -1,0 +1,118 @@
+PACKAGE MANIFEST
+----------------
+
+Documentation:
+--------------
+doc/MANIFEST
+  This file
+doc/INSTALL
+  How to install the database and the delivered application
+doc/UNINSTALL
+  How to uninstall the delivered application and remove the database
+doc/RELEASE
+  Release note containing the release name and a discription of the release
+doc/TROUBLESHOOTING
+  A quick reference on fixing problems during installation
+
+Executable files:
+-----------------
+The following files should be set to executable mode before installation
+commences. Their content will not change.
+
+bin/install.ksh
+  Installs a full or partial release
+bin/environment.ksh
+  Establishes the environment
+bin/database.ksh
+  Creates the database. This code is not mature yet. Do not use.
+
+Reference files:
+----------------
+The content of these files will not change, and an instance-specific copy will
+be made of them, e.g. listener.ora will become <instancename>_listener.ora
+
+init.ora
+  Database initialisation file
+listener.ora
+  Listener configuration file, which will be incorporated to the any existing
+  existing file.
+tnsnames.ora
+  Database TNSNAMES configuration, which will be incorporated to the any
+  existing existing file.
+oracle
+  Oracle and Listener service control file, which will be installed to the
+  xinitd service control framework
+logrotate.conf
+  Set up up the log rotation facility on the server for the application log
+uninstall.sql
+  Removes the application from the database
+compile
+  Compiles the application on the database
+analyse
+  Script to analyse all the tables in the database
+
+Source files:
+-------------
+These files are generated when the installation is built from the source
+database. An instance-specific copy will be made of each of them,
+e.g. catalogs.sql will become <instancename>_catalogs.sql.
+
+catalogs.sql
+  Used as part of the database installation
+data.sql
+  Populates all application configuration data into tables
+database.sql
+  Creates the database on which the application will run
+dblinks.sql
+  Create all application database links
+exceptions.sql
+  Create all application exceptions
+functions.sql
+  Create all application functions
+jobs.sql
+  Create all application jobs for dbms_job
+libraries.sql
+  Create all application libbraries
+packages.sql
+  Create all application package headers and package bodies
+privileges.sql
+  Create priviliedges of application objects
+procedures.sql
+  Create all application procedures
+roles.sql
+  Create all application roles
+sequences.sql
+  Create all application sequences
+synonyms.sql
+  Create all application synonyms
+tablespaces.sql
+  Create all application tablespaces
+tables.sql
+  Create all application tables
+triggers.sql
+  Create all application triggers
+types.sql
+  Create all data types
+uninstall.sql
+  Uninstallation of the application
+users.sql
+  Create all users and their priviledges
+views.sql
+  Create all application views
+
+Server configuration files:
+---------------------------
+logrotate.ksh
+  Installs log rotation on the server
+analyze.ksh
+  Installs the table analyse job for the database
+extprocs.ksh
+  Installs Oracle external procedures residing on server
+root.ksh
+  All operations that can only be performed by user 'root'.
+
+Tool Scripts:
+-------------
+tools/compile.sql
+  Compiles the entired database
+

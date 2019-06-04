@@ -1,0 +1,89 @@
+#!/bin/sh
+###############################################################################
+#  $Header $
+###############################################################################
+#  DESCRIPTION:
+#  This script holds the core system configuration settings in terms of the
+#  following environment variables:
+#  ORACLE_HOST,ORACLE_HOME,ORACLE_SID,ORACLE_DATA,ORACLE_RELEASE,ORACLE_BASE
+#  These environement variables are marked with a '%' characters around then
+#  so that they can be replaced with the respective environment settings of
+#  the target installation environement.
+#
+#  This script is built by an automated tool from the source database.
+#  It is unlikely that the script needs to be manually modified.
+#  All the values are verified
+#
+#  This configuration may not be entirely appropriate for the target
+#  installation environment that you want to install to.
+#  If this is the case, you should either edit this file before starting the
+#  installation, or you should make changes to the database after the
+#  installation has completed.
+#
+#  This script will work with Oracle 8i, 9i and 10g.
+#  It is intended to work on all Unices that support the KORN shell.
+#
+#  Most of the system variables defined here are space-delimited lists of
+#  values. Often, where multiple variables appear in a group, the values in the
+#  variabled need to correspond to one another. Consequently, values are often
+#  repeated in a variable.
+#  In some cases, multiple strings need to make up an item in such a list, in
+#  which case the items should be space-delimited.
+#
+#  The system variables are:
+
+#  2. User to Tablespace mapping          - TODO
+#  3. User to Temporary mapping           - TODO
+#  4. Table to Tablespace mapping         - TODO
+#  5. Index to Tablespace mapping         - TODO
+#  6. General Temporary tablespace        - TODO
+#  7. General User tablespace             - TODO
+#  8  System Tablespace mapping           - TODO
+#  9. Application Schemas                 - DONE
+# 10. Directory object                    - DONE
+# 11. UTL_FILE directories                - DONE
+#
+#  PREPARATION:
+#  1. This script would not normally be run by itself. It is invoked when
+#     environment.ksh is run.
+#  2. It contains the environment settings based on the source database
+#     that the installation builder based the installation on.
+#  3. In rare cases, this script may need to be manually configured prior to
+#     running the application installation.
+#
+#  INSTRUCTIONS:
+#  1. Do not edit the script unless you are sure that you know what you are
+#     doing. Incorrect values may prevent the database or the application
+#     from installing properly. If in doubt, leave everything as is
+#     and allow the installation to complete and amend the database or
+#     application afterwards.
+#  2. To manually effect the environment variables in your current shell, run
+#     this script like so:
+#       $ . ./systemconfig
+#
+###############################################################################
+
+
+#  2. User to Tablespace mapping    - TODO
+
+#  3. User to Temporary mapping     - TODO
+
+#  4. Table to Tablespace mapping   - TODO
+
+#  5. Index to Tablespace mapping   - TODO
+
+#  6. General Temporary tablespace  - TODO
+
+#  7. General User tablespace       - TODO
+
+#  8. System Tablespace mapping     - TODO
+
+#  9. Names of application schemas in a space-delimited list
+APPLICATION_SCHEMAS=""
+
+# 10. Directory objects and their physical directories.
+DIRECTORY_OBJECTS=""
+DIRECTORY_LOCATIONS=""
+
+# 11. UTL_FILE Directories
+UTL_FILE_DIRS=""

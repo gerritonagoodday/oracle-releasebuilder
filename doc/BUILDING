@@ -1,0 +1,194 @@
+Instructions for building Application Releases
+==============================================
+
+[$Header: $]
+
+Description
+-----------
+This brief guide describes how to manually build a full or a partial
+Installation. The process is still currently a manual one and not without
+caveats. Tools exist that may help speed the process up.
+
+
+Contents:
+---------
+0. Quick Guide using automated builder
+1. Conventions
+2. Prepraring a new installation in VSS
+3. Creating an installation
+
+0. Quick Guide using automated builder
+--------------------------------------
+
+0.1 The installation build process should be run as the Oracle Admin. user.
+    This user is usually configured as 'oracle' with primary group oinstall.
+    These names are not critical, as long they are consistently used.
+    Log in as this user, e.g.:
+
+      $ su - oracle
+      Password:
+
+0.2 Set the name of the database. This is an optional step, you will be
+    prompted for it again:
+
+    $ export ORACLE_SID=[DatabaseName]
+
+
+0.3 Go to the directoy that you want to build the installation in, e.g.
+
+    $ cd ~
+
+0.4 Create a build by running the following script, assuming that it is on
+    your path:
+
+    $ buildrelease.ksh
+
+    The installation build process will now start. Answer the questions or
+    accept the suggested defaults.
+
+0.5 Building a partial installation
+    From Oracle 9i onwards, it is possible to build an installation based on
+    changes in the database since the previous release. If you are running a
+    lesser version of Oracle or do not have flash_back enables, then only full
+    system builds will be created.
+
+
+
+1. Conventions
+--------------
+
+1.1 Nomenclature of releases:
+    Both full and partial installations (patches) are labeled with the
+    code build Id. The build Id is in the form buildXXX, where XXX is the
+    zero-padded build number starting from 001. The build Id increments by
+    one after on build.
+
+1.2 Development Release
+    There is also a notional release called 'build000', which is based on the
+    latest and complete code-base in the development tree. This build should
+    mostly be in a state so that the latest state of application development
+    could be created on a clean database.
+
+1.4 The installation of a new release on an existing target installation will
+    change the patch-level of the target installation. The current patch level
+    can be ascertained on the target installation as follows:
+
+      $ su - oracle
+      Password:
+      $ export ORACLE_SID=<instance_name>
+      $ sqlplus -s / as sysdba <<!
+      select string_value
+        from utl.tb_config
+       where upper(variable)=upper('PatchLevel');
+      !
+
+1.5 The patch level will only be updated to a new value after the successfull
+    installation of the new release.
+
+1.6 Database objects are built from the selected Oracle database. Note that
+    Database objects that were compiled prior to being checked into their
+    relevent soure code control system may not necessarily reflect correct
+    headers details in their creation scripts.
+
+1.7 Other scripts are built from source files that are readily accessible
+    from the environment that the build creation is run from.
+
+1.8 The resulting code tree of a release is in the following form:
+
+      buildXXX/application/<schema_name>/data
+              |           |             |extprocs
+              |           |             |objects
+              |           |             |packages
+              |           |             |sequences
+              |           |             |synonyms
+              |           |             |tables
+              |           |             |tests
+              |           |             |triggers
+              |           |             /views
+              |           |
+              |           /<schema_name>/etc..
+              |           |
+              |           /<schema_name>/etc..
+              |           |
+              |           /<scripts>
+              |           :
+              |
+              /install
+              /tools
+
+
+1.9 Installation scripts
+    A collection of ready-made templates for various types of Oracle
+    objects and scripts is in the templates directory.
+
+
+2.13 A minimum installation will have the following files in its install
+    directory:
+
+      install.ksh
+      environment.ksh
+      cleanup.ksh
+      uninstall.sql
+      systemconfig
+      RELEASE
+      INSTALL
+      UNINSTALL
+      TROUBLESHOOTING
+      ../tools/compile.sql
+
+    - and at least one of the following files:
+
+      catalogs.sql custom_begin.sql custom_end.sql database.sql data.sql
+      dblinks.sql directories.sql exceptions.sql functions.sql jobs.sql
+      libraries.sql packages.sql privileges.sql procedures.sql roles.sql
+      sequences.sql synonyms.sql tables.sql tablespaces.sql triggers.sql
+      types.sql uninstall.sql users.sql views.sql analyse.ksh extprocs.ksh
+      custom_begin.ksh custom_end.ksh logrotate.ksh
+
+2.14 Custom operations
+    In some releases, operations that do not fit in the current design of the
+    installer need to be performed, such as adding or dropping a column from a
+    table without affecting the table content. For these types of operations,
+    there are custom scripts which can either be run at the beginning or the
+    end of the installation, e.g. custom_begin and custom_end. Two pairs of
+    these scripts exist, one pair for SQL operations (.sql extension) and a
+    pair for server operations (.ksh extension). Needless to say, their
+    content is manually crafted from the framework files in the codebase
+    install directory.
+
+
+3. Creating an installation
+--------------
+3.1 Get the latests version of the new release and copy the directory to a
+    Unix machine.
+
+3.2 Run the script buildrelease.ksh from
+
+3.2 If the directory $CODEBASE/Installation/builder is not already on the Unix
+    machine, copy the VSS directory $DWH/Installation/builder to the Unix
+    machine and perform the following steps:
+
+      $ cd $CODEBASE/Installation/builder
+      $ dos2unix buildrelease.ksh
+      $ chmod +x buildrelease.ksh
+
+3.3 Run the package creation script, and enter the build Id when prompted -
+    - note that the build Id is case sensitive, e.g. buildXXX.
+
+      $ ./buildrelease.ksh
+
+    This will create a tar-ball file with a .tar.gz extension in the
+    $CODEBASE/Installation/builder/packages directory.
+
+3.4 You can view the log of the build in the log directory.
+
+3.5 Copy the tar-ball file back to a Windows machine's directory
+    %CODEBASE%\Installation\builder\packages, and add it to VSS for future
+    reference to $DWH/Installation/builder/packages.
+
+3.6 Distrubute the tar-ball packages with the instruction file in
+   $DWH/Installation/builder/INSTALL or
+   $CODEBASE/Installation/builder/INSTALL
+
+--------------
+END.

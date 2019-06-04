@@ -1,0 +1,210 @@
+#!/bin/bash
+#
+#
+# oracle  Starts and stops oracle instances and listener
+#
+# chkconfig: 345 90 10
+# description: Oracle instance and listener services control
+# probe: true
+
+# Source function library
+. /etc/init.d/functions
+
+# Source network configuration
+if [ ! -f /etc/sysconfig/network ]; then
+  exit 0
+fi
+. /etc/sysconfig/network
+
+# Hostname
+if [[ -z $HOSTNAME ]]
+then
+  export HOSTNAME=`uname -n`
+fi
+
+function usage {
+  echo "Usage:   $0 {start|stop|restart|abort|status}"
+  echo "         [Optional space-delimited list of Oracle Instances in inverted commas,"
+  echo "          unless \$ORACLE_STARTUP_SIDS has been set.]"
+  echo "Example: /etc/init.d/oracle start"
+  echo "         Starts all instances defined in the variable \$ORACLE_SIDS."
+  echo "         This variable is usually defined in the ~oracle/.profile file in most"
+  echo "         Unixes or in ~oracle/.bash_profile on Linux systems."
+  echo "Example: /etc/init.d/oracle start [instance name]"
+  echo "         Starts the named instance, overriding the variable \$ORACLE_SIDS"
+  echo "Example: /etc/init.d/oracle start \$ORACLE_SID"
+  echo "         Starts the instance defined by the value of \$ORACLE_SID,"
+  echo "         overriding the environment variable \$ORACLE_SIDS"
+  [[ -n $ORACLE_SID  ]] && echo "\$ORACLE_SID is currently defined as [$ORACLE_SID]."
+  [[ -n $ORACLE_SIDS ]] && echo "\$ORACLE_SIDS is currently defined as [$ORACLE_SIDS]."
+}
+
+# Starts the database and listeners
+function start {
+  check_start_listener
+  if [[ $? -ne 0 ]]
+  then
+    echo "Instance ${ORACLE_SID} will not be accessible to other devices on the network."
+  fi
+
+  # Start instance
+  su -l oracle -c "export ORACLE_SID=${ORACLE_SID}; sqlplus /nolog > /dev/null <<!
+connect / as sysdba
+startup
+quit
+!
+"
+}
+
+# Shows status of database and listeners
+function status {
+  TMPFILE=/tmp/${ORACLE_SID}$$
+  su -l oracle -c "export ORACLE_SID=${ORACLE_SID}; sqlplus /nolog > ${TMPFILE} <<!
+connect / as sysdba
+quit
+!"
+  if [[ -z $(cat ${TMPFILE} | grep 'Connected') ]]
+  then
+    echo "Instance ${ORACLE_SID} does not exist on ${HOSTNAME}"
+  else
+    echo -n "Instance ${ORACLE_SID} exists on ${HOSTNAME} "
+    if [[ -z $(cat ${TMPFILE} | grep 'idle instance') ]]
+    then
+      echo "and is running."
+    else
+      echo "but is not running."
+    fi
+  fi
+  rm -f ${TMPFILE}
+
+  if [[ -z $(su -l oracle -c "lsnrctl status" | grep -i 'no listener') ]]
+  then
+    echo "Oracle Listener is running on ${HOSTNAME}."
+  else
+    echo "Oracle Listener is not running on ${HOSTNAME}"
+  fi
+}
+
+# Shuts down database instance and listeners
+function stop {
+  su -l oracle -c "export ORACLE_SID=${ORACLE_SID}; sqlplus /nolog > /dev/null <<!
+connect / as sysdba
+shutdown immediate
+!
+"
+
+  if [[ -n $(su -l oracle -c "lsnrctl status" | grep -i 'no listener') ]]
+  then
+    # TODO: Only shutdown listener when no further instances are running
+    su -l oracle -c "lsnrctl stop > /dev/null"
+  fi
+}
+
+# Hard shutdown of instance and listener
+function abort {
+  su -l oracle -c "export ORACLE_SID=${ORACLE_SID}; sqlplus /nolog > /dev/null <<!
+connect / as sysdba
+shutdown abort
+!
+"
+
+  if [[ -n $(su -l oracle -c "lsnrctl status" | grep -i 'no listener') ]]
+  then
+    # TODO: Only shutdown listener when no further instances are running
+    su -l oracle -c "lsnrctl stop > /dev/null"
+  fi
+}
+
+function check_start_listener {
+  if [[ -z $(su -l oracle -c "lsnrctl status" | grep -i 'no listener') ]]
+  then
+    # Listener is not running - try and start it
+    su -l oracle -c "lsnrctl start > /dev/null" > /dev/null
+    sleep 3
+    if [[ -n $(su -l oracle -c "lsnrctl status" | grep -i 'no listener') ]]
+    then
+      echo "Could not start the Oracle Listener. Check configuration file listener.ora"
+      return 1
+    fi
+  fi
+  return 0
+}
+
+function check_oracle_sid {
+  # Before pinging the ORACLE_SID, ensure that the listener is running
+  check_start_listener
+  if [[ $? -ne 0 ]]
+  then
+    return 1
+  fi
+  # Can only ping the instance when the listener is running
+  su -l oracle -c "tnsping $ORACLE_SID > /dev/null" > /dev/null
+  return $?
+}
+
+# MAIN
+# Default ORACLE_SID's to use when none are specified on the command line.
+# All the ORACLE_SID's can be defined in the ~oracle/.profile file or the
+# ~oracle/.bash_profile file and exported as a space-delimited list in the
+# ORACLE_SIDS environment variable
+# e.g. export ORACLE_SIDS="db1 db2 db3 db4"
+if [[ -z $2 ]]
+then
+  # Get user oracle's ORACLE_SIDS value
+  ORACLE_SIDS=$(su -l oracle -c "echo $ORACLE_SIDS")
+  if [[ -z $ORACLE_SIDS ]]
+  then
+    ORACLE_SIDS=$(su -l oracle -c "echo $ORACLE_SID")
+  fi
+  if [[ -z $1 ]]
+  then
+    usage
+    exit 1
+  fi
+else
+  # Use command-line value
+  ORACLE_SIDS=$2
+fi
+
+# Apply the command to each of the specified ORACLE_SID's:
+for ORACLE_SID in $ORACLE_SIDS
+do
+  check_oracle_sid
+  if [[ $? -eq 0 ]]
+  then
+    case "$1" in
+      start)
+        echo "Starting Oracle instance $ORACLE_SID"
+        start
+        status
+        ;;
+      status)
+        echo "Status of Oracle instance $ORACLE_SID"
+        status
+        ;;
+      stop)
+        echo "Stopping Oracle instance $ORACLE_SID"
+        stop
+        status
+        ;;
+      abort)
+        echo "Aborting Oracle instance $ORACLE_SID"
+        abort
+        ;;
+      restart)
+        echo "Restarting Oracle instance $ORACLE_SID"
+        stop
+        start
+        status
+        ;;
+      *)
+        usage
+        exit 1
+        ;;
+    esac
+  else
+    echo "ORACLE_SID $ORACLE_SID could not be found on $HOSTNAME."
+  fi
+done
+
+exit 0

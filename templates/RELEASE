@@ -1,0 +1,57 @@
+----------------------
+ReleaseName="%RN%"
+----------------------
+
+Description
+-----------
+This is the RELEASE NOTE for the build indicated above.
+
+Availability:
+-------------
+Available:            "%AV%"
+
+Prerequisite installations:
+--------------------------
+%PI%
+
+
+Scope:
+------
+ProductName:          "%PN%"
+Customer:             "%CN%"
+
+
+Target Environment
+------------------
+TargetServer:         "%TS%"
+TargetInstance:       "%TI%"
+TargetEnvironment     "%TE%"
+
+
+Change Requests:
+---------------
+The following change requests are addressed in this release:
+
+ID        DESCRIPTION
+%CR%
+
+
+Functional Changes:
+-------------------
+As a result, the following new functional changes have been introduced in this
+release:
+
+ID        DESCRIPTION
+%FC%
+
+
+Changed Components:
+-------------------
+The following components have been changed or added:
+
+VERSION   COMPONENT
+%CC%
+
+--------------
+END.
+

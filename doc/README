@@ -1,0 +1,90 @@
+Oracle Application Installation (ORAPPI) Builder
+================================================
+http://www.hoekstra.co.uk
+
+[ $Header: $ ]
+
+Table of Contents:
+1. A What?
+2. What does it do?
+3. The Future
+4. Contact
+5. Installation
+6. Licensing
+
+1. A What?
+----------
+Yet another noun-soup project name. This is a consequence of modern life where
+a highly specific mechanism cannot be described with a single word. We are
+nowadays forced to concatenate nouns to make up for this linguistic deficiency
+and end up with a result that sometimes sounds very impressive and at other
+times silly. We then take this noun-soup 'thing' and create a corny acronym.
+Here is ours: ORAPPI.
+
+Why was it created? This project stems from countless hours spend manually
+creating installation scripts off development environments. Due to the manual
+coding, a problem would inevitably creep in somewhere. Once the hand-crafted
+installation was created and delivered to the customer, the customer still had
+a fair amount of guesswork to do to make the installation work on his target
+platform environement. And things then went wrong at great expense.
+
+Using vendor-specific tools also had its drawbacks, such as database exports
+that were not compatible between various versions of Oracle and or various
+versions of Operating Systems, or did not fit on the particular disk and
+table space configurations. The result is also not in a human-readable form -
+this is important.
+
+2. What does it do?
+-------------------
+This project creates an installation based on an existing database application.
+The resulting installation can build the application on a different UNIX-based
+Oracle server. The installation is in the form of a series of human-readable
+scripts that can be viewed using any text viewing or editing tool.
+
+The installation scripts are written in KORN and use SED and AWK and Oracle's
+SQLPLUS. Delivering the installation in a script form has some advantages:
+ - The operation of the installation is highly visible and open to inspection
+ - Configuration changes are easily made with a text editor
+
+The resulting installations run on Oracle 8i, 9i, and Oracle 10g RDBMS's that
+are hosted on UNIX-type platforms.
+
+The scripts can also be used as a text-based manifest of the development
+database for use in version control systems.
+
+3. The Future
+-------------
+In the ideal world, all UNIX system admins would understand Perl, and the
+resulting installation scripts would all be written in Perl mixed with SQL.
+Probably not, though.
+
+A nice X-GUI and a port for creating a mySQL-based installations is on the
+cards.
+
+
+4. Contact
+----------
+It is easy to get in contact with the code originators if you need help or if
+you find bugs that need to be reported. Or if you have suggestions to improve
+any aspect of the package. Contributors of code that helps furthering the aims
+of this project are of course most welcome!
+
+E-mail: gerrit@hoekstra.co.uk
+
+Web: You can download the most recent version of this application from
+http://www.hoekstra.co.uk
+
+5. Installation
+---------------
+For detailed instructions on how to build an installation based on an
+existing database application, refer to the INSTALL document in the ./build
+directory.
+
+For detailed instructions on how to install the delivered application on your
+database server, refer to the INSTALL document in the ./install directory.
+
+6. Licensing
+------------
+Copyright (c) 1999-2005 Gerrit Hoekstra. All Rights Reserved.
+This program is free software; you can redistribute it and or modify it under
+the same terms of the GPL. See the file COPYING.

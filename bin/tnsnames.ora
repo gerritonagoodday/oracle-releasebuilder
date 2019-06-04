@@ -1,0 +1,34 @@
+#----------------------------------------------------------------------
+#----------------------------------------------------------------------
+#  DESCRIPTION:
+#  TNSNAMES.ORA Network Configuration File: %TNS_ADMIN%/tnsnames.ora"
+#
+#  USAGE:
+#  Edit this file to change the database's behaviour.
+#  See the manual, "Oracle Administrator's Guide" for details.
+#----------------------------------------------------------------------
+
+# %ORACLE_SID% Configuration
+%ORACLE_SID% =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL=TCP)(HOST = %HOSTNAME%)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = %ORACLE_SID%)
+  )
+)
+
+# External process listener
+EXTPROC_LISTENER =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC))
+    )
+    (CONNECT_DATA =
+      (SID = PLSExtProc)
+      (PRESENTATION = RO)
+    )
+  )
+

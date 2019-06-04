@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+#
+# Displays the application log in either an X or a TEXT dialog window.
+# If the dialog application can't be found, then the application is
+# simply tail'ed to the console.
+#
+# This script should be run as the application user.
+#
+# Configuration
+# This can be changed below:
+LOGFILE="events"    # * The logfile is called events
+LOGDIR="log"        # * The logfile resides in $HOME/log
+
+# Derive the application name from the current $HOME directory name
+typeset -u APPNAME=$(basename $HOME)
+
+
+
+# Display error message in dialog or console
+# Parameter 1: Error Message
+function ErrMsg {
+  if [[ -n $DIALOG ]]; then
+    $DIALOG --title  "Error" --msgbox "$1" 15 60
+  else
+    # Simple output to console
+    print $1
+  fi
+}
+
+# Check which environment we are in
+if [[ -z $DISPLAY ]]; then
+  DIALOG=dialog
+else
+  # Text if Xdialog exists
+  XDIALOG=$(which Xdialog 2>/dev/null)
+  if  [[ -z $XDIALOG ]]; then
+    DIALOG=$(which dialog 2>/dev/null)
+    if  [[ -z $XDIALOG ]]; then
+      DIALOG=dialog
+    fi
+  else
+    # Final test if Xdialog will run
+    $XDIALOG --title "Test" --infobox "Test" 1 1 1 2>/dev/null
+    if [[ $? -eq 0 ]]; then
+      DIALOG=$XDIALOG
+    else
+      DIALOG=$(which dialog 2>/dev/null)
+      if  [[ -z $XDIALOG ]]; then
+        DIALOG=dialog
+      fi
+    fi
+  fi
+fi
+
+# Check if configuration is correct
+if [[ ! -d ~/$LOGDIR ]]; then
+  ErrMsg "The log directory '$HOME/$LOGDIR' does not exit.\n\nExiting..." && exit 1
+fi
+if [[ ! -f "$HOME/$LOGDIR/$LOGFILE" ]]; then
+  ErrMsg "The log file '$LOGFILE' does not exist in directory '$HOME/$LOGDIR'.\n\nExiting..." && exit 1
+fi
+
+# Display log output
+if [[ -n $DIALOG ]]; then
+  $DIALOG --title "$APPNAME Event Monitor" \
+          --no-cancel \
+          --tailbox "$HOME/$LOGDIR/$LOGFILE" 24 76
+else
+  tail -f "$HOME/$LOGDIR/$LOGFILE"
+fi
+

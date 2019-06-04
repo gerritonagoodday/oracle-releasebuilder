@@ -1,0 +1,40 @@
+#!/bin/bash
+###############################################################################
+###############################################################################
+#  DESCRIPTION:
+#  This file is manually created and performs custom commands specific for
+#  this release. It normally only contains the skeleton.
+#  It is invoked near the beginning of the installation
+#
+#  LIMITATIONS:
+#  No interactive or root commands can be performed from here.
+#  All commands should be performed by user 'oracle'
+#
+#  USAGE:
+#    $ su - oracle
+#    Password:
+#    $ export ORACLE_SID=<instance_name>
+#    $ chmod +x %ORACLE_SID%_custom_begin.ksh
+#    $ ./%ORACLE_SID%_custom.ksh
+###############################################################################
+
+# Set up log file
+[[ ! -d log ]] && mkdir log
+LOGFILE=$(basename $0)
+LOGFILE=log/${LOGFILE%\.*}.log
+rm -f $LOGFILE
+touch $LOGFILE
+
+
+echo " "
+echo "Custom Server commands"
+echo "======================"
+echo " "
+
+
+# {{ ORAPPI_INSTALLATION_BEGIN }}
+
+
+# {{ ORAPPI_INSTALLATION_END }}
+
+exit 0

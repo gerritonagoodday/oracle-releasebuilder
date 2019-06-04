@@ -1,0 +1,170 @@
+RELEASE INSTALLATION GUIDE
+==========================
+
+Contents:
+---------
+  1. Description
+  2. Preparation
+  3. Instructions
+
+1. Description
+--------------
+This file describes how to install the accompaning code release.
+This installation will work with Oracle 8i, 9i and 10g and is
+intended to work on all environments that support the KORN shell.
+
+Depending on build, the release is either a rebuild, i.e. it creates a new
+empty Oracle database and builds an entire application in it, or is an
+incremental build, i.e. it adds features to an existing database and
+application.
+
+Releases are identified by a 3-digit build numbers, which is also referred to
+as a Patch Level. It appears in the form buildXXX, where XXX is zero
+left-padded. The build number itself does not give an indication of wether it
+is a rebuild or an incremental build - this is indicated on the accompaning
+release note.
+
+An incremental build requires that a previous build has successfully been
+installed. The accompaning release note states what the minimum patch level
+of the application should be before this release is installed. In most cases,
+it would be the build number prior to the new build number.
+
+You can obtain the most recent build number from your application as follows:
+
+  $ su - oracle
+  Password:
+  $ export ORACLE_SID=<instance_name>
+  $ sqlplus -s / as sysdba <<!
+  select string_value as PatchLevel
+    from utl.config
+   where upper(variable)=upper('PatchLevel');
+  !
+
+  PATCHLEVEL
+  ----------
+  build004
+
+
+The application's patch level is updated after a successful installation.
+
+2. Preparation
+--------------
+2.1 You should have either Xdialog or dialog (as a minimum) installed on the
+    server. The text-based 'dialog' only works if the ncurses library has been
+    installed. Xdialog works on an X11 terminal and in most cases only if the
+    GTK library has been installed on the server.
+
+2.2 You may be required to log on as root during the installation.
+    Various system operations may be installed during the installation. These
+    will be explained to you in the course of the release installation.
+
+2.3 The Oracle RDBMS should be installed on the target server.
+    It is not necessary to create a database, as this installation will, if
+    necessary, create a database instance specific to this application.
+
+2.4 You should be able to log on as the Oracle Admin. user.
+    This user is most commonly set up as 'oracle' with primary group
+    'oinstall' and would have been set up when the Oracle RDBMS was installed.
+
+Furthermmore, if this is a first-time build, then:
+
+2.5 Establish the location of data, rollback and control files on the server.
+   If you are not sure, then commonly-used directories will be suggested
+   during the course of the installation. Ensure that the Oracle Admin. user
+   has full rights to these directories.
+
+2.6 Decide on a name (ORACLE_SID) for the database.
+
+3. Instructions
+---------------
+3.1 The delivered installation must be copied to a directory that the Oracle
+    Admin. user has read and write access to, e.g. /tmp, /u01/app/oracle/ etc.
+    The installation will not run from read-only media.
+
+    To illustrate the following, we will use user oracle's home directory '~'.
+
+    If the installation arrived by magnetic or optical media, mount the media
+    first. Mounting media may need to be done as user 'root', depending on the
+    server's security configuration:
+
+    Mount the media:
+
+      $ su -
+      Password:
+      $ mount /mnt/floppy
+        -- or --
+      $ mount /mnt/cdrom
+      $ exit
+
+    Copy the installation it to the Oracle Admin's home directory
+
+      $ su - oracle
+      Password:
+      $ cp /mnt/floppy/buildXXX.tar.gz ~/.
+        -- or --
+      $ cp /mnt/cdrom/buildXXX.tar.gz ~/.
+      $ exit
+
+    Unmount the media:
+
+      $ su -
+      Password:
+      $ umount /mnt/floppy
+        -- or --
+      $ umount /mnt/cdrom
+      $ exit
+
+3.2 With the media loaded into the Oracle Admin's home directory, log on as
+    the Oracle Administrator:
+
+      $ su - oracle
+      Password:
+
+    You should now be in this user's home directory.
+
+3.3 The environment variable ORACLE_SID should point to the name of the
+    database that the patch will be applied to. You can check this by typing:
+
+      $ echo $ORACLE_SID
+
+    If this is not defined, then set it to the Oracle instance as follows:
+
+      $ export ORACLE_SID=<instance_name>
+
+3.4 Untar and gunzip the installation file as follows:
+
+      $ tar -xzvf buildXXX.tar.gz
+      $ cd buildXXX/install
+
+3.5 Start the installation of the release that you have just unpacked.
+
+      $ ./install.ksh
+
+    Follow the instructions on the installation carefully.
+
+    In most cases you should be able to restart an installation if it aborted
+    for whatever reason with no undue consequences.
+
+3.6 One or more logfiles will be created in a 'log'-directory rooted off the
+    'install'-directory. Refer to these log files for fault-finding.
+
+4. When things go wrong
+-----------------------
+4.1 The first time that a build is installed on an environment, a file called
+    <instance_name>_environement.ksh will be created in the '~/.orappi'-
+    directory. This file holds all the settings that pertain to the
+    particular Oracle instance and server and is therefore not reusable on
+    other installations or environments (even if they are on the same server),
+    nor should the content of it be changed. The settings in this file are
+    established once only using a thorough question-and-answer session.
+
+    If this file has been deleted, run the following script and answer the
+    questions as accurately as possible:
+
+      $ ./environment.ksh
+
+4.2 The installation has been generated in such a way that the harmful effects
+    are kept to a minimum. Rerun this installation if it had to be aborted.
+
+--------------
+END.
