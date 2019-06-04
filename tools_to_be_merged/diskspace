@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+#
+# Displays available disk space for all partitions in a nice box
+
+typeset -u HOSTNAME_
+
+# Get host name
+if [[ -z $HOSTNAME ]]; then
+  HOSTNAME_=$(hostname)
+  if [[ -z $HOSTNAME_ ]]; then
+    HOSTNAME_="this Server"
+  fi
+fi
+
+# Check which environment we are in
+if [[ -z $DISPLAY ]]; then
+  DIALOG=dialog
+else
+  # Text if Xdialog exists
+  XDIALOG=$(which Xdialog 2>/dev/null)
+  if  [[ -z $XDIALOG ]]; then
+    DIALOG=$(which dialog 2>/dev/null)
+    if  [[ -z $XDIALOG ]]; then
+      DIALOG=dialog
+    fi
+  else
+    # Final test if Xdialog will run
+    $XDIALOG --title "Test" --infobox "Test" 1 1 1 2>/dev/null
+    if [[ $? -eq 0 ]]; then
+      DIALOG=$XDIALOG
+    else
+      DIALOG=$(which dialog 2>/dev/null)
+      if  [[ -z $XDIALOG ]]; then
+        DIALOG=dialog
+      fi
+    fi
+  fi
+fi
+
+
+
+# Calculate disk space
+result=$(df -k | awk '{total+=$2
+avail+=$4}\
+END { mb_avail = avail / 1024
+gb_avail = mb_avail / 1024
+mb_total = total / 1024
+gb_total = mb_total / 1024
+percent = (mb_avail / mb_total ) * 100
+printf "%.0fMB (%.2fGB) out of a total of\n%.0fMB (%.2fGB) is available.\n\n%.0f %% utilisation.\n", mb_avail, gb_avail,mb_total,gb_total,percent
+}')
+
+if [[ -n $DIALOG ]]; then
+  (echo $result | cut -d' ' -f 12; sleep 4 ) | \
+  $DIALOG --title "Total Diskspace on $HOSTNAME_" --ok-label "Close" --guage "$result" 10 44
+else
+  print "Total Diskspace on $HOSTNAME_:\n"
+  print "$result\n"
+fi
+
